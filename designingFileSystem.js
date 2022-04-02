@@ -1,67 +1,92 @@
 // Space - 0(n)
-// Time - 0(n*m) 
+// Time - 0(n*mlogm) 
 
-// there is room for improvment, erronous code
 function designingFileSystem(listOfNames) {
     // use a hash map
     const namesMap = {};
     populateNamesMap(listOfNames, namesMap);
-
     // checks the key-value pairs and generate the output
     return generateListOfUniqueFileNames(namesMap);
 }
 
 function populateNamesMap(list, map) {
     for(const element of list) {
-        if(map[element]) {
-            map[element] += 1;
+        let [checkedElement, suffix] = getCheckedElementAndSuffix(element);
+        if(map[checkedElement]) {
+            suffix = checkSuffixNotExistsOrReturnNewSuffix(map[checkedElement], suffix);
+            map[checkedElement].push(suffix);
         } else {
-            map[element] = 1;
+            map[checkedElement] = [suffix];
         }
     }
 }
 
-function generateListOfUniqueFileNames(map) {
-    const res = [];
-
-    for(const fileName in map) {
-        if(map[fileName] === 1) {
-            res.push(fileName);
-        } else {
-            res.push(fileName);
-            for(let i=1; i<map[fileName]; i++) {
-                let newFileName = `${fileName}(${i})`;
-
-                while(true) {
-                    let newFileName2 = newFileName;
-                    if(newFileName2 in map) {
-                        newFileName2 = getIncrementalNewFileName(newFileName2);
-                    } else {
-                        res.push(newFileName2);
-                        break;
-                    }
-                }
-
-                res.push(newFileName);
-            }
-        }
-    }
-
-    console.log(res);
-    return res;
-}
-
-function getIncrementalNewFileName(fileName) {
+function getCheckedElementAndSuffix(string) {
+    let suffixFlag = false;
     let start = 0;
     let end = 0;
-    for(let i=0; i<fileName.length; i++) {
-        if(fileName[i] === '(') {
+    for(let i=0; i<string.length; i++) {
+        if(string[i] === '(') {
             start = i;
-        } else if(fileName[i] === ')') {
+            suffixFlag = true;
+        } else if(string[i] === ')') {
             end = i;
         }
     }
-    return parseInt(fileName.slice(start, end));
+
+    if(suffixFlag) {
+        return [string.slice(0, start), parseInt(string.slice(start+1, end))];
+    } else {
+        return [string, 0];
+    }
 }
 
-designingFileSystem(["Valorant","Valorant(1)","Valorant","Valorant(2019)"]);
+function checkSuffixNotExistsOrReturnNewSuffix(array, suffix) {
+    if(!array.includes(suffix)) return suffix;
+
+    array.sort();
+    let curIdx = array.indexOf(suffix)
+    let prevIdx = curIdx - 1;
+    let nextIdx = curIdx + 1;
+    let leftToSuffix = suffix-1;
+    let rightToSuffix = suffix+1;
+
+    while(prevIdx >= 0) {
+        if(array[prevIdx] != leftToSuffix)  {
+            return leftToSuffix;
+        } else {
+            prevIdx--;
+            leftToSuffix -= 1;
+        }
+    }
+
+    while(nextIdx < array.length) {
+        if(array[nextIdx] != rightToSuffix)  {
+            return rightToSuffix;
+        } else {
+            nextIdx++;
+            rightToSuffix += 1;
+        }
+    }
+
+    return leftToSuffix >= 0 ? leftToSuffix : rightToSuffix;
+
+}
+
+function generateListOfUniqueFileNames(namesMap) {
+    let res = [];
+    for(const key in namesMap) {
+        let keyValueArray = namesMap[key];
+        for(const element of keyValueArray) {
+            if(element === 0) res.push(key);
+            else {
+                res.push(`${key}(${element})`);
+            }
+        }
+    }
+    return res;
+}
+
+
+
+console.log(designingFileSystem(["Valorant(3)", "Valorant(3)", "Valorant(3)", "Valorant(3)", "Valorant(3)"]));
